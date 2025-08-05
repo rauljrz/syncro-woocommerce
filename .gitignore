@@ -1,0 +1,53 @@
+########## Visual Foxpro ##########
+# Created by 
+#
+# Author: raul.jrz@gmail.com
+# Url: 
+##################################
+
+# Links
+vfp9.lnk
+*.lnk
+
+# Archivos temporales de Fox
+*.bak
+*.fxp
+*.err
+*.tmp
+*.log
+*.ini
+foxuser.*
+
+*.cdx
+*.dbf
+*.ftp
+#*.pjt
+#*.pjx
+
+# Archivos ejecutables
+*.exe
+*.dll
+*.com
+*.app
+
+
+# Archivos comprimidos
+*.rar
+*.zip
+*.7z
+
+# Mis notas personales y/o respaldos
+*.ideas
+/ideas/
+/respaldo/
+
+# Carpetas que no deben controlarse
+/temp/
+
+*.json
+inst.txt
+cliente.txt
+
+# Carpeta de Mis Notas Personales del sistema
+backups/
+.idea-rauljrz/
