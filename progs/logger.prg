@@ -65,7 +65,7 @@ DEFINE CLASS logger AS CUSTOM
 			lbReturn = .T.
 
 		CATCH TO loEx
-			WAIT WINDOWS THIS.message_exception(loEx)
+			WAIT WINDOWS THIS.message_exception(loEx) NOWAIT
 		ENDTRY
 
 		RETURN lbReturn
@@ -105,7 +105,7 @@ DEFINE CLASS logger AS CUSTOM
 			lbReturn = .T.
 
 		CATCH TO loEx
-			WAIT WINDOWS THIS.message_exception(loEx)
+			WAIT WINDOWS THIS.message_exception(loEx) NOWAIT
 		ENDTRY
 
 		RETURN lbReturn
@@ -155,8 +155,9 @@ DEFINE CLASS logger AS CUSTOM
 			lbReturn = .T.
 
 		CATCH TO loEx
-			SET STEP ON 
-			WAIT WINDOWS THIS.message_exception(loEx)
+			*SET STEP ON 
+			*WAIT WINDOWS THIS.message_exception(loEx)
+			lbReturn = .F.
 		ENDTRY
 
 		RETURN lbReturn
@@ -171,6 +172,20 @@ DEFINE CLASS logger AS CUSTOM
 		ENDIF
 
 		RETURN IIF(THIS.current_level==1, 'error.log', THIS.namefile)
+	ENDPROC
+	*
+	*----------------------------------------------------------------------------*
+	PROCEDURE getFullNameFile		&& Obtiene el nombre del archivo y el path
+	*
+	*----------------------------------------------------------------------------*
+		LOCAL lcDirectory, lcNameFile
+		lcDirectory = 'Logs'
+
+		THIS.check_folder(lcDirectory)
+		lcNameFile = ALLTRIM(lcDirectory) +'\'+Date2Str(DATE(),'!')+ '_';
+					+THIS.getnamefile()
+
+		RETURN lcNameFile
 	ENDPROC
 	*
 	*----------------------------------------------------------------------------*
@@ -208,6 +223,32 @@ DEFINE CLASS logger AS CUSTOM
 		THIS.current_level = 4
 
 		RETURN THIS.WRITE(tcMessage)
+	ENDPROC
+	*
+	*----------------------------------------------------------------------------*
+	PROCEDURE Log (tcLevel AS STRING, tcMessage AS STRING)
+	* Método genérico para logging que acepta nivel como parámetro
+	*----------------------------------------------------------------------------*
+		LOCAL lcLevel, lbReturn
+		
+		lcLevel = UPPER(ALLTRIM(tcLevel))
+		lbReturn = .F.
+		
+		DO CASE
+			CASE lcLevel = "CRITICAL" OR lcLevel = "ERROR"
+				lbReturn = THIS.Critical(tcMessage)
+			CASE lcLevel = "WARNING" OR lcLevel = "WARN"
+				lbReturn = THIS.Warning(tcMessage)
+			CASE lcLevel = "NOTICE" OR lcLevel = "INFO"
+				lbReturn = THIS.Notice(tcMessage)
+			CASE lcLevel = "DEBUG" OR lcLevel = "INFO"
+				lbReturn = THIS.Info(tcMessage)
+			OTHERWISE
+				* Por defecto usar nivel INFO
+				lbReturn = THIS.Info(tcMessage)
+		ENDCASE
+		
+		RETURN lbReturn
 	ENDPROC
 	*
 	*----------------------------------------------------------------------------*
@@ -313,13 +354,9 @@ DEFINE CLASS logger AS CUSTOM
 	* Guarda en un archivo el log
 	*----------------------------------------------------------------------------*
 		LOCAL lcDirectory AS STRING, lcNameFile AS STRING
-
-		lcDirectory = 'Logs'
 		#DEFINE crlf CHR(13)+CHR(10)
 
-		THIS.check_folder(lcDirectory)
-		lcNameFile = ALLTRIM(lcDirectory) +'\'+Date2Str(DATE(),'!')+ '_';
-					+THIS.getnamefile()
+		lcNameFile = THIS.getFullNameFile()
 
 		*- 2024.02.05 
 		THIS.delete_logger(lcNameFile)
