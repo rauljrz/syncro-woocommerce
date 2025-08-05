@@ -28,6 +28,10 @@ IF !LOWER(SET('PROCEDURE')) $ 'date2str'
     SET PROCEDURE TO progs\date2str.prg ADDITIVE
 ENDIF
 
+IF !LOWER(SET('PROCEDURE')) $ 'baseclass' 
+    SET PROCEDURE TO progs\baseclass.prg ADDITIVE
+ENDIF
+
 * Limpiar la pantalla
 CLEAR
 
@@ -134,5 +138,5 @@ SET PRINT OFF
 ? 'Reporte generado en: ' + cReportFile
 WAIT "Presione cualquier tecla para abrir el reporte..." WINDOWS NOWAIT
 MODIFY FILE &cReportFile NOWAIT
-SET PROCEDURE TO (lcProc)
+SET PROCEDURE TO &lcProc
 

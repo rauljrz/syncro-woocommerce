@@ -113,7 +113,7 @@ DEFINE CLASS Test_StringConnect AS TestBase
 		LOCAL lcContent, lcPrint
 		
 		lcPrint = SET("Printer")
-		SET PRINTER TO
+		*SET PRINTER TO
 		SET PRINTER OFF
 		TEXT TO lcContent NOSHOW TEXTMERGE 
 [DATABASE]
@@ -131,7 +131,7 @@ DB_PASSWORD=test_password
 		ENDTEXT
 		
 		STRTOFILE(lcContent, THIS.TestConfigFile)
-		SET PRINTER (lcPrint)
+		*SET PRINTER &lcPrint
 		SET PRINTER ON
 	ENDFUNC
 	*
