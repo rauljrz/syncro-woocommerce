@@ -31,7 +31,7 @@ DEFINE CLASS db AS baseClass
 	currentDataBase = ''
 	PROTECTED typeConnect, DefaultTypeConnect 
 	typeConnect = .NULL.            && Identifica si estas en COMERCIAL o CONTABLE
-	DefaultTypeConnect = 'CONTABLE' && Tipo de conexion por defecto.
+	DefaultTypeConnect = 'COMERCIAL' && Tipo de conexion por defecto.
 
 	*----------------------------------------------------------------------------*
 	PROCEDURE Init(tcTypeConnection AS STRING)
