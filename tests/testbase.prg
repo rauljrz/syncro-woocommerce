@@ -70,6 +70,13 @@ DEFINE CLASS TestBase AS Custom
 	ENDFUNC
 	*
 	*----------------------------------------------------------------------------*
+	FUNCTION AssertEquals(tcExpected, tcActual, tcMessage)
+	* Verifica que dos valores sean iguales
+	*----------------------------------------------------------------------------*
+		RETURN THIS.AssertEqual(tcExpected, tcActual, tcMessage)
+	ENDFUNC
+	*
+	*----------------------------------------------------------------------------*
 	FUNCTION AssertEqual(tcExpected, tcActual, tcMessage)
 	* Verifica que dos valores sean iguales
 	*----------------------------------------------------------------------------*
@@ -223,7 +230,6 @@ DEFINE CLASS TestBase AS Custom
 		IF tlPassed
 			THIS.PassedCount = THIS.PassedCount + 1
 		ELSE
-			SET STEP ON 
 			THIS.FailedCount = THIS.FailedCount + 1
 		ENDIF
 	ENDFUNC
@@ -337,7 +343,7 @@ DEFINE CLASS TestBase AS Custom
 			ENDIF
 		ENDIF
 		
-		IF THIS.PassedCount > 0
+		IF THIS.PassedCount > 0 AND .f. && Por ahora solo muestro las que fallan.
 			? '=== PRUEBAS EXITOSAS ==='
 			FOR lnI = 1 TO THIS.TestResults.Count
 				loResult = THIS.TestResults.Item(lnI)
