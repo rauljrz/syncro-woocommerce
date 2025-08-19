@@ -1,3 +1,87 @@
+*|--------------------------------------------------------------------------
+*| DOCUMENTACIÓN DE LA CLASE LOGGER
+*|--------------------------------------------------------------------------
+*|
+*| La clase Logger permite registrar eventos y mensajes del sistema en archivos
+*| de log con diferentes niveles de severidad para facilitar el debugging y
+*| monitoreo de aplicaciones.
+*|
+*| NIVELES DE LOG DISPONIBLES:
+*| - CRITICAL (1): Errores críticos que requieren atención inmediata
+*| - WARNING  (2): Advertencias sobre posibles problemas
+*| - NOTICE   (3): Información importante pero no crítica
+*| - INFO     (4): Información general del flujo de la aplicación
+*|
+*| EJEMPLO DE USO BÁSICO:
+*|
+*| LOCAL loLogger
+*| loLogger = NEWOBJECT("Logger", "progs\logger.prg")
+*|
+*| * Configurar archivo de log personalizado
+*| loLogger.SetLogFile("mi_aplicacion.log")
+*|
+*| * Registrar diferentes tipos de mensajes
+*| loLogger.Critical("Error crítico en conexión a base de datos")
+*| loLogger.Warning("Memoria RAM por encima del 80%")
+*| loLogger.Notice("Usuario admin ha iniciado sesión")
+*| loLogger.Info("Proceso de sincronización iniciado")
+*|
+*| EJEMPLO DE USO AVANZADO CON CONFIGURACIÓN:
+*|
+*| LOCAL loLogger
+*| loLogger = NEWOBJECT("Logger", "progs\logger.prg")
+*|
+*| * Configurar nivel mínimo de log (solo CRITICAL y WARNING)
+*| loLogger.SetLevel(2)
+*|
+*| * Personalizar formato de salida
+*| loLogger.SetFormat("DATETIME - [levelname] - MESSAGE")
+*|
+*| * Activar/desactivar logging
+*| loLogger.SetEnabled(.T.)
+*|
+*| * Usar en bloques TRY...CATCH
+*| TRY
+*|     * Código que puede fallar
+*|     THIS.oDB.SQL_Exec(cSQL, "crs_Result")
+*|     loLogger.Info("Consulta ejecutada correctamente")
+*| CATCH TO loException
+*|     loLogger.Critical("Error en consulta SQL: " + loException.Message)
+*| ENDTRY
+*|
+*| INTEGRACIÓN CON OTRAS CLASES:
+*|
+*| * En servicios WooCommerce
+*| LOCAL loOrderAPI, loLogger
+*| loOrderAPI = NEWOBJECT('WooCommerceOrderAPI', 'app\services\woocommerce\woocommerce_order_api.prg')
+*| loLogger = NEWOBJECT("Logger", "progs\logger.prg")
+*|
+*| loLogger.Info("Iniciando sincronización de pedidos")
+*| loOrders = loOrderAPI.GetRecentOrders(7)
+*| IF ISNULL(loOrders)
+*|     loLogger.Warning("No se encontraron pedidos recientes")
+*| ELSE
+*|     loLogger.Info("Procesados " + ALLTRIM(STR(loOrders.Count)) + " pedidos")
+*| ENDIF
+*|
+*| PROPIEDADES PRINCIPALES:
+*| - namefile: Nombre del archivo de log (por defecto "logger.LOG")
+*| - LEVEL: Nivel mínimo de mensajes a registrar (1-4)
+*| - islogger: Activar/desactivar el logging (.T./.F.)
+*| - FORMAT: Formato de salida de los mensajes
+*|
+*| MÉTODOS PRINCIPALES:
+*| - Critical(tcMessage): Registra mensaje crítico
+*| - Warning(tcMessage): Registra advertencia
+*| - Notice(tcMessage): Registra notificación
+*| - Info(tcMessage): Registra información general
+*| - SetLogFile(tcFileName): Establece archivo de log personalizado
+*| - SetLevel(tnLevel): Establece nivel mínimo de logging
+*| - SetEnabled(tlEnabled): Activa/desactiva el logging
+*|
+*/
+
+#INCLUDE include\default.h
 *
 *|--------------------------------------------------------------------------
 *| logger
@@ -5,7 +89,7 @@
 *|
 *| clase encarga de realizar las grabaciones de actividades para los logs
 *| Author.......: Raul Juarez (raul.jrz[at]gmail.com)
-*| Repository..: https://github.com/rauljrz/syncro-woocommerce
+*| Repository..: https://github.com/rauljrz
 *| Created.....: 2025.08.04 - 19.38
 *| Purpose.....: Grabar en archivo las acciones del sistema.
 *|
