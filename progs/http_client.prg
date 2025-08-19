@@ -266,7 +266,7 @@ DEFINE CLASS HTTPClient AS Custom
         
         lcURL = THIS.buildURL()  && Construir URL
         lcBody = IIF(VARTYPE(tcBody) != 'C', '', ALLTRIM(tcBody)) && Preparar body
-       SET STEP ON 
+
         THIS.oLogger.notice(' REQUEST ';
 							+crlf +' -  URL....: '+lcURL;
 							+crlf +' -  Method.: '+THIS.cMethod;
@@ -288,7 +288,19 @@ DEFINE CLASS HTTPClient AS Custom
                 THIS.nLastResponseCode = .Status
                 lcStatusText = .StatusText
                 lcBodyResponse = .responseText && Obtener respuesta
+				THIS.cLastStatusText = lcStatusText
+                THIS.cLastResponse = lcBodyResponse
                 
+                * Determinar tipo de respuesta
+                IF THIS.isTextResponse(.GetAllResponseHeaders)
+                    lcResponse = .responseText
+                    THIS.cLastResponseBody = lcResponse
+                ELSE
+                    lcResponse = .responseBody
+                    THIS.cLastResponseBody = "Contenido binario"
+                ENDIF
+                THIS.cLastResponse = lcResponse
+                               
                 IF !INLIST(THIS.nLastResponseCode, 0, 200, 201, 202, 204, 422)
                     IF THIS.nLastResponseCode = 404
                         THROW "Endpoint no encontrado: " + lcURL
@@ -306,31 +318,21 @@ DEFINE CLASS HTTPClient AS Custom
                     THROW "Error HTTP " + ALLTRIM(STR(THIS.nLastResponseCode)) + ": " + lcStatusText
                 ENDIF
                 
-                * Determinar tipo de respuesta
-                IF THIS.isTextResponse(.GetAllResponseHeaders)
-                    lcResponse = .responseText
-                    THIS.cLastResponseBody = lcResponse
-                ELSE
-                    lcResponse = .responseBody
-                    THIS.cLastResponseBody = "Contenido binario"
-                ENDIF
-                
-                THIS.cLastStatusText = lcStatusText
-                THIS.cLastResponse = lcResponse
             ENDWITH
             
         CATCH TO loEx 
             THIS.cLastError = "Error en petición HTTP: " ;
-                        + IIF(loEx.ErrorNo=2071, loEx.UserValue, loEx.Message) ;
-                        + crlf + 'URL: ' + lcURL
+            			+ '('+THIS.cMethod+') URL: ' + lcURL;
+                        + crlf + IIF(loEx.ErrorNo=2071, loEx.UserValue, loEx.Message)
+                        
             THIS.oLogger.critical(THIS.cLastError)
             THROW THIS.cLastError
         FINALLY
             loHttp = .NULL.
             THIS.oLogger.notice(' RESPONSE ';
-            				+crlf +' -  Status Code.....: '+TRANSFORM(THIS.nLastResponseCode);
-							+crlf +' -  Status Text.....: '+THIS.cLastStatusText;
-							+crlf +' -  Body............: '+THIS.cLastResponseBody)
+            				+crlf +' -  Status Code: '+TRANSFORM(THIS.nLastResponseCode);
+							+' - '+THIS.cLastStatusText;
+							+crlf +' -  Body.......: '+THIS.cLastResponseBody)
         ENDTRY
         
         RETURN lcResponse

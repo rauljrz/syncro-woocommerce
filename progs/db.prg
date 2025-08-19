@@ -21,7 +21,7 @@ DEFINE CLASS db AS baseClass
 	NAME = "db"
 
 	brelanzarthrow = .T.	&& Si relanza la excepcion a niveles superiores
-	errormsg = .NULL.
+	errormsg = ''
 	errornro = .NULL.
 	handler_sql = 0		    && Handle que apunta a la base de datos de la contabilidad
 	odata = .NULL.
@@ -127,7 +127,7 @@ DEFINE CLASS db AS baseClass
 				THIS.Handler_SQL = SQLSTRINGCONNECT(lcStringConnect)
 				lbReturn = THIS.Validate_Result(THIS.Handler_SQL)
 				
-				THIS.writelog_Secret('Database.: '+THIS.getCurrentRealDataBase())
+				THIS.writelog_Secret('Database..: '+THIS.getCurrentRealDataBase())
 			ENDIF
 		CATCH TO loEx
 			THIS.catchexception(loEx)
@@ -152,9 +152,10 @@ DEFINE CLASS db AS baseClass
 						tnHandler,;
 						THIS.handler_sql)
 
-			THIS.WriteLog(tcStmt)
+			THIS.WriteLog(tcStmt +CHR(13)+CHR(10);
+				+ IIF(EMPTY(lcCursor),'',' --> To: '+lcCursor))
 
-			lnResult = IIF(EMPTY(tcCursor) OR LEN(tcCursor)<1,;
+			lnResult = IIF(EMPTY(lcCursor) OR LEN(lcCursor)<1,;
 							SQLEXEC(lnHandler, tcStmt),;
 							SQLEXEC(lnHandler, tcStmt, lcCursor);
 						)
@@ -440,4 +441,76 @@ DEFINE CLASS db AS baseClass
 		ENDTRY
 		RETURN lbReturn
 	ENDFUNC
+	*
+	*----------------------------------------------------------------------------*
+	PROCEDURE Query(tcStmt AS STRING, tcCursor AS STRING)
+	* Ejecuta una consulta SELECT y devuelve una colección con los resultados
+	*----------------------------------------------------------------------------*
+		LOCAL lcCursor, lnResult, loCollection, loRow, lnI, lcFieldName
+		LOCAL laFields[1], lnFieldCount
+		
+		TRY
+			* Generar nombre de cursor si no se proporciona
+			lcCursor = IIF(ISNULL(tcCursor) OR EMPTY(tcCursor), 'crs_query_' + ALLTRIM(STR(SECONDS())), tcCursor)
+			
+			* Ejecutar la consulta
+			IF !THIS.SQL_Exec(tcStmt, lcCursor)
+				RETURN .NULL.
+			ENDIF
+			
+			* Verificar si el cursor existe y tiene datos
+			IF !USED(lcCursor) OR RECCOUNT(lcCursor) = 0
+				USE IN SELECT(lcCursor)
+				RETURN .NULL.
+			ENDIF
+			
+			* Crear colección para los resultados
+			loCollection = NEWOBJECT('Collection')
+			
+			* Obtener información de los campos
+			lnFieldCount = AFIELDS(laFields, lcCursor)
+			
+			* Recorrer todos los registros
+			SELECT (lcCursor)
+			SCAN
+				loRow = NEWOBJECT('Collection')
+				
+				* Agregar cada campo a la fila
+				FOR lnI = 1 TO lnFieldCount
+					lcFieldName = laFields[lnI, 1]
+					loRow.Add(EVALUATE(lcCursor + '.' + lcFieldName), lcFieldName)
+				ENDFOR
+				
+				* Agregar la fila a la colección
+				loCollection.Add(loRow)
+			ENDSCAN
+			
+			* Cerrar el cursor
+			USE IN SELECT(lcCursor)
+			
+			RETURN loCollection
+			
+		CATCH TO loEx
+			THIS.catchexception(loEx)
+			* Cerrar cursor en caso de error
+			IF USED(lcCursor)
+				USE IN SELECT(lcCursor)
+			ENDIF
+			RETURN .NULL.
+		ENDTRY
+	ENDPROC
+	*
+	*----------------------------------------------------------------------------*
+	PROCEDURE GetLastError()
+	* Devuelve el último error ocurrido
+	*----------------------------------------------------------------------------*
+		RETURN THIS.errormsg
+	ENDPROC
+	*
+	*----------------------------------------------------------------------------*
+	PROCEDURE Execute(tcStmt AS STRING)
+	* Ejecuta una sentencia SQL que no devuelve resultados (INSERT, UPDATE, DELETE)
+	*----------------------------------------------------------------------------*
+		RETURN THIS.SQL_Exec(tcStmt)
+	ENDPROC
 ENDDEFINE

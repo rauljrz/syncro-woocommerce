@@ -70,6 +70,18 @@ ENDFUNC
 FUNCTION json_getErrorMsg()
 	RETURN _json.cError
 ENDFUNC
+
+*----------------------------------------------------------------------------*
+* Funciones de compatibilidad con nombres modernos
+*----------------------------------------------------------------------------*
+FUNCTION json_stringify(xExpr)
+	RETURN json_encode(@xExpr)
+ENDFUNC
+
+FUNCTION json_parse(cJson)
+	RETURN json_decode(cJson)
+ENDFUNC
+
 *
 * json class
 *
@@ -80,11 +92,13 @@ DEFINE CLASS json AS CUSTOM
 	cJson=''
 	cError=''
 
-	*
-	* Genera el codigo cJson para parametro que se manda
-	*
+	*----------------------------------------------------------------------------*
+	* Método principal para codificar JSON
 	FUNCTION encode(xExpr)
+	*
+	*----------------------------------------------------------------------------*
 		LOCAL cTipo
+
 		* Cuando se manda una arreglo,
 		IF TYPE('ALen(xExpr)')=='N'
 			cTipo = 'A'
@@ -159,10 +173,19 @@ DEFINE CLASS json AS CUSTOM
 		RETURN ''
 	ENDFUNC
 
+	*----------------------------------------------------------------------------*
+	* Método de compatibilidad Stringify (alias de encode)
+	FUNCTION Stringify(xExpr)
 	*
-	* regresa un elemento representado por la cadena json que se manda
-	*
+	*----------------------------------------------------------------------------*
+		RETURN THIS.encode(@xExpr)
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método principal para decodificar JSON
 	FUNCTION decode(cJson)
+	*
+	*----------------------------------------------------------------------------*
 		LOCAL retValue
 		cJson = STRTRAN(cJson,CHR(9),'')
 		cJson = STRTRAN(cJson,CHR(10),'')
@@ -181,6 +204,62 @@ DEFINE CLASS json AS CUSTOM
 			RETURN NULL
 		ENDIF
 		RETURN retValue
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método de compatibilidad Parse (alias de decode)
+	FUNCTION Parse(cJson)
+	*
+	*----------------------------------------------------------------------------*
+		RETURN THIS.decode(cJson)
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método para obtener el último error
+	FUNCTION GetLastError()
+	*
+	*----------------------------------------------------------------------------*
+		RETURN THIS.cError
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método para limpiar el último error
+	FUNCTION ClearError()
+	*
+	*----------------------------------------------------------------------------*
+		THIS.cError = ""
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método para validar si un string es JSON válido
+	FUNCTION IsValid(cJson)
+	*
+	*----------------------------------------------------------------------------*
+		LOCAL oTemp
+		THIS.ClearError()
+		oTemp = THIS.decode(cJson)
+		RETURN EMPTY(THIS.cError)
+	ENDFUNC
+
+	*----------------------------------------------------------------------------*
+	* Método para formatear JSON con indentación
+	FUNCTION Format(cJson, nIndent)
+	*
+	*----------------------------------------------------------------------------*
+		LOCAL oObj, cResult
+		
+		IF EMPTY(nIndent)
+			nIndent = 2
+		ENDIF
+		
+		oObj = THIS.decode(cJson)
+		IF !ISNULL(oObj)
+			cResult = THIS.encode(oObj)
+			* Aquí se podría implementar la indentación
+			RETURN cResult
+		ENDIF
+		
+		RETURN cJson
 	ENDFUNC
 
 	FUNCTION parsevalue()
@@ -422,18 +501,64 @@ DEFINE CLASS json AS CUSTOM
 	ENDFUNC
 
 	FUNCTION fixUnicode(cStr)
+		* Conversión de los códigos Unicode más comunes a caracteres latinos
+		* Vocales minúsculas con tilde
 		cStr = STRTRAN(cStr,'\u00e1','á')
 		cStr = STRTRAN(cStr,'\u00e9','é')
 		cStr = STRTRAN(cStr,'\u00ed','í')
 		cStr = STRTRAN(cStr,'\u00f3','ó')
 		cStr = STRTRAN(cStr,'\u00fa','ú')
+		* Vocales mayúsculas con tilde
 		cStr = STRTRAN(cStr,'\u00c1','Á')
 		cStr = STRTRAN(cStr,'\u00c9','É')
 		cStr = STRTRAN(cStr,'\u00cd','Í')
 		cStr = STRTRAN(cStr,'\u00d3','Ó')
 		cStr = STRTRAN(cStr,'\u00da','Ú')
+		* Ñ y ñ
 		cStr = STRTRAN(cStr,'\u00f1','ñ')
 		cStr = STRTRAN(cStr,'\u00d1','Ñ')
+		* ü y Ü
+		cStr = STRTRAN(cStr,'\u00fc','ü')
+		cStr = STRTRAN(cStr,'\u00DC','Ü')
+		* Otros caracteres latinos comunes
+		cStr = STRTRAN(cStr,'\u00e0','à')
+		cStr = STRTRAN(cStr,'\u00e2','â')
+		cStr = STRTRAN(cStr,'\u00e4','ä')
+		cStr = STRTRAN(cStr,'\u00e8','è')
+		cStr = STRTRAN(cStr,'\u00ea','ê')
+		cStr = STRTRAN(cStr,'\u00eb','ë')
+		cStr = STRTRAN(cStr,'\u00ee','î')
+		cStr = STRTRAN(cStr,'\u00ef','ï')
+		cStr = STRTRAN(cStr,'\u00f4','ô')
+		cStr = STRTRAN(cStr,'\u00f6','ö')
+		cStr = STRTRAN(cStr,'\u00f9','ù')
+		cStr = STRTRAN(cStr,'\u00fb','û')
+		cStr = STRTRAN(cStr,'\u00ff','ÿ')
+		cStr = STRTRAN(cStr,'\u00c0','À')
+		cStr = STRTRAN(cStr,'\u00c2','Â')
+		cStr = STRTRAN(cStr,'\u00c4','Ä')
+		cStr = STRTRAN(cStr,'\u00c8','È')
+		cStr = STRTRAN(cStr,'\u00ca','Ê')
+		cStr = STRTRAN(cStr,'\u00cb','Ë')
+		cStr = STRTRAN(cStr,'\u00ce','Î')
+		cStr = STRTRAN(cStr,'\u00cf','Ï')
+		cStr = STRTRAN(cStr,'\u00d4','Ô')
+		cStr = STRTRAN(cStr,'\u00d6','Ö')
+		cStr = STRTRAN(cStr,'\u00d9','Ù')
+		cStr = STRTRAN(cStr,'\u00db','Û')
+		cStr = STRTRAN(cStr,'\u00df','ß')
+		* Caracteres especiales de puntuación
+		cStr = STRTRAN(cStr,'\u201c','“')
+		cStr = STRTRAN(cStr,'\u201d','”')
+		cStr = STRTRAN(cStr,'\u2018','‘')
+		cStr = STRTRAN(cStr,'\u2019','’')
+		cStr = STRTRAN(cStr,'\u2013','–')
+		cStr = STRTRAN(cStr,'\u2014','—')
+		cStr = STRTRAN(cStr,'\u2026','…')
+		cStr = STRTRAN(cStr,'\u00ab','«')
+		cStr = STRTRAN(cStr,'\u00bb','»')
+		cStr = STRTRAN(cStr,'\u00bf','¿')
+		cStr = STRTRAN(cStr,'\u00a1','¡')
 		RETURN cStr
 	ENDFUNC
 ENDDEFINE

@@ -47,6 +47,7 @@ foxuser.*
 *.json
 inst.txt
 cliente.txt
+*.txt
 
 # Carpeta de Mis Notas Personales del sistema
 backups/
