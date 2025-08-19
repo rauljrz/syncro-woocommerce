@@ -257,13 +257,22 @@ DEFINE CLASS TestBase AS Custom
 		THIS.CurrentTestName = tcTestName
 		lcMethodName = 'Test' + tcTestName
 		
-		IF PEMSTATUS(THIS, lcMethodName, 5)
-			THIS.SetUp()
-			EVALUATE('THIS.' + lcMethodName + '()')
-			THIS.TearDown()
-		ELSE
-			MESSAGEBOX('Método de prueba no encontrado: ' + lcMethodName, 16, 'Error')
-		ENDIF
+		TRY
+			IF PEMSTATUS(THIS, lcMethodName, 5)
+				THIS.SetUp()
+				EVALUATE('THIS.' + lcMethodName + '()')
+				THIS.TearDown()
+			ELSE
+				MESSAGEBOX('Método de prueba no encontrado: ' + lcMethodName, 16, 'Error')
+			ENDIF
+		CATCH TO loException
+	        ? '   ? ERROR GRAVE al ejecutar ' + lcMethodName+ ':'
+	        ? '      Mensaje: ' + loException.Message
+	        ? '      Línea: ' + ALLTRIM(STR(loException.LineNo))
+	        ? '      Contenido: ' + ALLTRIM(loException.LineContents)
+	        ? '      Procedimiento: ' + loException.Procedure
+	        ?
+		ENDTRY
 	ENDFUNC
 	*
 	*----------------------------------------------------------------------------*
